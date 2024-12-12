@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product List</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- Header -->
+  <header>
+    <h1>All Products</h1>
+  </header>
+
+  <!-- Navbar -->
+  <nav>
+    <a href="index.html">Ana Sayfa</a>
+    <a href="products.html">Ürünler</a>
+    <a href="about.html">Hakkımızda</a>
+    <a href="contact.html">İletişim</a>
+    <a href="sepet.html">Sepet</a>
+  </nav>
+
+  <!-- Ürün Listesi Başlığı ve Kategori Dropdown -->
+  <div class="products-header">
+    <div class="category-dropdown">
+      <select id="category-filter" onchange="onCategoryChange()">
+        <option value="">Tüm Kategoriler</option>
+        <!-- Kategoriler dinamik olarak eklenecek -->
+      </select>
+    </div>
+  </div>
+
+  <!-- Tüm Ürünler -->
+
+  <div id="product-list" class="product-container"></div>
+
+  <!-- Popüler Ürünler -->
+  <h2 style="text-align: center; margin-top: 40px;">Popular Products</h2>
+  <div id="popular-product-list" class="product-container"></div>
+
+  <script>
+    let allProducts = []; // Tüm ürünler burada tutulacak
+    let popularProducts = []; // Popüler ürünler burada tutulacak
+
+    // URL'den kategori parametresini al
+    function getCategoryFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('category');
+    }
+
+    // API'den ürünleri çek
+    async function fetchProducts() {
+      try {
+        const response = await fetch('http://localhost:5000/api/data');
+        const products = await response.json();
+        allProducts = products;
+
+        // Dropdown için kategorileri ekle
+        const categorySelect = document.getElementById('category-filter');
+        const categories = [...new Set(products.map(product => product.category_name))];
+        categories.forEach(category => {
+          const option = document.createElement('option');
+          option.value = category;
+          option.textContent = category;
+          categorySelect.appendChild(option);
+        });
+
+        // Popüler ürünleri belirle
+        popularProducts = products.filter(product => product.stockquantity < 25);
+
+        // URL'den gelen kategori bilgisi varsa filtrele
+        const selectedCategory = getCategoryFromURL();
+        if (selectedCategory) {
+          categorySelect.value = selectedCategory; // Dropdown'da seçili yap
+          filterByCategory(selectedCategory); // Ürünleri filtrele
+        } else {
+          displayProducts(products, 'product-list');
+        }
+
+        // Popüler ürünleri göster
+        displayProducts(popularProducts, 'popular-product-list');
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      }
+    }
+
+    // Ürünleri ekrana basan fonksiyon
+    function displayProducts(products, containerId) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = ''; // Önceki ürünleri temizle
+
+      products.forEach(product => {
+        const productLink = document.createElement('a');
+        productLink.href = `productDetail.html?id=${product.productid}`;
+        productLink.classList.add('product-item');
+
+        const productImage = document.createElement('img');
+        productImage.src = product.imageurl;
+        productImage.alt = product.product_name;
+
+        const productName = document.createElement('h3');
+        productName.textContent = product.product_name;
+
+        const productPrice = document.createElement('p');
+        productPrice.textContent = `${product.price} TL`;
+
+        productLink.append(productImage, productName, productPrice);
+        container.appendChild(productLink);
+      });
+    }
+
+    // Dropdown'dan kategori seçilince çalışan fonksiyon
+    function onCategoryChange() {
+      const selectedCategory = document.getElementById('category-filter').value;
+      // URL'yi güncelle
+      const newURL = selectedCategory
+        ? `products.html?category=${encodeURIComponent(selectedCategory)}`
+        : 'products.html';
+      window.history.pushState(null, '', newURL);
+
+      filterByCategory(selectedCategory);
+    }
+
+    // Kategoriye göre ürünleri filtrele
+    function filterByCategory(category) {
+      const filteredProducts = category
+        ? allProducts.filter(product => product.category_name === category)
+        : allProducts;
+
+      displayProducts(filteredProducts, 'product-list');
+    }
+
+    fetchProducts();
+  </script>
+
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2024 Doğal Taşlar | Tüm Hakları Saklıdır.</p>
+  </footer>
+</body>
+
+</html>

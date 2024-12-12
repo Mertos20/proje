@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Detail</title>
+  <link rel="stylesheet" href="style.css">
+
+
+</head>
+
+<body>
+
+  <header>
+    <h1>Ürün Detayı</h1>
+  </header>
+  <nav>
+    <a href="index.html">Ana Sayfa</a>
+    <a href="products.html">Ürünler</a>
+    <a href="about.html">Hakkımızda</a>
+    <a href="contact.html">İletişim</a>
+    <a href="sepet.html">Sepet</a>
+  </nav>
+
+
+  <!-- Toast Bildirimi -->
+  <div id="toast" class="toast"></div>
+
+  <div id="product-detail" class="product-detail"></div>
+
+  <script>
+    // URL parametresinden ürün ID'sini al
+    function getQueryParam(name) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(name);
+    }
+
+    async function fetchProductDetails() {
+      const productId = getQueryParam('id');
+      if (!productId) {
+        document.getElementById('product-detail').innerHTML = '<p>Product not found</p>';
+        return;
+      }
+
+      try {
+        const response = await fetch(`http://localhost:5000/api/data?id=${productId}`);
+        const product = await response.json();
+
+        if (product.length === 0) {
+          document.getElementById('product-detail').innerHTML = '<p>Product not found</p>';
+        } else {
+          const p = product[0];
+          const productDetailDiv = document.getElementById('product-detail');
+
+          // Ürün detaylarını içeren div
+          const productInfoDiv = document.createElement('div');
+          productInfoDiv.className = 'product-info';
+
+          const productName = document.createElement('h1');
+          productName.textContent = p.product_name;
+          productInfoDiv.appendChild(productName);
+
+          const productDescription = document.createElement('p');
+          productDescription.textContent = p.description;
+          productInfoDiv.appendChild(productDescription);
+
+          const productPrice = document.createElement('p');
+          productPrice.textContent = `Price: ${p.price} TL`;
+          productInfoDiv.appendChild(productPrice);
+
+          const productCategory = document.createElement('p');
+          productCategory.textContent = `Category: ${p.category_name}`;
+          productInfoDiv.appendChild(productCategory);
+
+          const addToCartBtn = document.createElement('button');
+          addToCartBtn.textContent = 'Sepete Ekle';
+          addToCartBtn.className = 'add-to-cart-btn';
+          addToCartBtn.onclick = () => addToCart(p);
+          productInfoDiv.appendChild(addToCartBtn);
+
+          // Resim ekle
+          const productImage = document.createElement('img');
+          productImage.src = p.imageurl;
+
+          // İçerikleri ekle
+          productDetailDiv.appendChild(productImage);
+          productDetailDiv.appendChild(productInfoDiv);
+
+        }
+      } catch (error) {
+        console.error('Error fetching product details:', error);
+        document.getElementById('product-detail').innerHTML = '<p>Error loading product details.</p>';
+      }
+    }
+
+    // Sepete ürün ekleme fonksiyonu
+    function addToCart(product) {
+      let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+      // Ürünü sepete ekle
+      cart.push({
+        id: product.id,
+        name: product.product_name,
+        price: product.price,
+        image: product.imageurl,
+      });
+
+      // localStorage'a kaydet
+      localStorage.setItem('cart', JSON.stringify(cart));
+
+      // Toast bildirimini göster
+      showToast(`${product.product_name} sepete eklendi!`);
+    }
+
+    // Toast bildirimini gösteren fonksiyon
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message; // Mesajı toast'a ekle
+      toast.classList.add("show"); // Toast'u göster
+
+      // 3 saniye sonra toast'u gizle
+      setTimeout(function () {
+        toast.classList.remove("show");
+      }, 1000); // 1 saniye sonra gizle
+    }
+
+    // Sayfa yüklendiğinde ürün detaylarını çek
+    fetchProductDetails();
+  </script>
+
+  <footer>
+    <p>&copy; 2024 Doğal Taşlar | Tüm Hakları Saklıdır.</p>
+  </footer>
+</body>
+
+</html>

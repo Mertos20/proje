@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sepet</title>
+  <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+  <header>
+    <h1>Sepetiniz</h1>
+  </header>
+  <nav>
+    <a href="index.html">Ana Sayfa</a>
+    <a href="products.html">Ürünler</a>
+    <a href="about.html">Hakkımızda</a>
+    <a href="contact.html">İletişim</a>
+    <a href="sepet.html">Sepet</a>
+  </nav>
+
+  <div id="cart-items"></div>
+  <div id="total" class="total"></div> <!-- Toplam tutar burada görünecek -->
+
+  <!-- Sepeti Onayla Butonu -->
+  <button class="confirm-btn" onclick="confirmCart()">Sepeti Onayla</button>
+
+  <!-- Toast Bildirimi -->
+  <div id="toast">Sepetiniz onaylandı!</div>
+
+  <script>
+    function loadCart() {
+      const cartItemsDiv = document.getElementById('cart-items');
+      const totalDiv = document.getElementById('total');
+      let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+      // Aynı ürünleri gruplamak için bir nesne kullan
+      const groupedCart = {};
+
+      cart.forEach(item => {
+        if (groupedCart[item.name]) {
+          groupedCart[item.name].quantity += 1; // Adet artır
+        } else {
+          groupedCart[item.name] = { ...item, quantity: 1 };
+        }
+      });
+
+      let totalAmount = 0;
+
+      // Sepet boşsa mesaj göster
+      if (Object.keys(groupedCart).length === 0) {
+        cartItemsDiv.innerHTML = '<p>Sepetiniz boş!</p>';
+        totalDiv.textContent = '';
+        return;
+      }
+
+      cartItemsDiv.innerHTML = ''; // Önceki içeriği temizle
+
+      // Gruplandırılmış ürünleri ekrana yazdır
+      Object.values(groupedCart).forEach((item, index) => {
+        const cartItemDiv = document.createElement('div');
+        cartItemDiv.className = 'cart-item';
+
+        const img = document.createElement('img');
+        img.src = item.image;
+
+        const details = document.createElement('div');
+        details.innerHTML = `<p>${item.name} (${item.quantity})</p><p>Fiyat: ${item.price} TL</p>`;
+
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = 'Kaldır';
+        removeBtn.className = 'remove-btn';
+        removeBtn.onclick = () => removeFromCart(item.name);
+
+        cartItemDiv.appendChild(img);
+        cartItemDiv.appendChild(details);
+        cartItemDiv.appendChild(removeBtn);
+
+        cartItemsDiv.appendChild(cartItemDiv);
+
+        totalAmount += parseFloat(item.price) * item.quantity; // Toplam tutara ekle
+      });
+
+      totalDiv.textContent = `Toplam Tutar: ${totalAmount.toFixed(2)} TL`;
+    }
+
+    function removeFromCart(name) {
+      let cart = JSON.parse(localStorage.getItem('cart')) || [];
+      // İlk eşleşen ürünü kaldır
+      const index = cart.findIndex(item => item.name === name);
+      if (index !== -1) {
+        cart.splice(index, 1);
+      }
+      localStorage.setItem('cart', JSON.stringify(cart));
+      loadCart();
+    }
+
+    function confirmCart() {
+      let cart = JSON.parse(localStorage.getItem('cart')) || [];
+      if (cart.length === 0) {
+        showToast("Sepetinize ürün ekleyin!");
+        return;
+      }
+
+      // Sepeti sıfırla
+      localStorage.removeItem('cart');
+      loadCart(); // Sepeti yenile
+
+      // Toast mesajı göster
+      showToast("Sepetiniz onaylandı!");
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message; // Mesajı ayarla
+      toast.className = "show";
+
+      setTimeout(() => {
+        toast.className = toast.className.replace("show", "");
+      }, 3000); // 3 saniye sonra gizle
+    }
+
+    loadCart();
+  </script>
+  <br>
+  <br>
+
+  <footer>
+    <p>&copy; 2024 Doğal Taşlar | Tüm Hakları Saklıdır.</p>
+  </footer>
+</body>
+
+</html>
